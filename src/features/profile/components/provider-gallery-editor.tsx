@@ -1,0 +1,111 @@
+"use client";
+
+import axios from "axios";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import MobileHeader from "@/components/layout/MobileHeader";
+import { FullScreenModal } from "@/components/modals";
+import { getProviderGallery, updateProviderGallery, uploadProviderGalleryImages } from "../profile.service";
+import type { ProviderGalleryImage } from "../profile.types";
+import { compressImage } from "@/lib/compress-image";
+
+type PendingImage = { id: string; file: File; previewUrl: string };
+const maximumImages = 10;
+
+function clientId() {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+export function ProviderGalleryEditor({ providerSlug, providerName, onClose, onSaved }: { providerSlug: string; providerName: string; onClose: () => void; onSaved: () => void }) {
+  const [existing, setExisting] = useState<ProviderGalleryImage[]>([]);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [pending, setPending] = useState<PendingImage[]>([]);
+  const [initialized, setInitialized] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState("Saving…");
+  const previewUrls = useRef(new Set<string>());
+  const preparingFiles = useRef(false);
+  const [isPreparing, setIsPreparing] = useState(false);
+  const queryClient = useQueryClient();
+  const queryKey = ["provider-gallery", providerSlug] as const;
+  const query = useQuery({ queryKey, queryFn: () => getProviderGallery(providerSlug) });
+
+  useEffect(() => {
+    if (!query.data || initialized) return;
+    queueMicrotask(() => {
+      setExisting(query.data);
+      setInitialized(true);
+    });
+  }, [initialized, query.data]);
+
+  useEffect(() => {
+    const urls = previewUrls.current;
+    return () => { urls.forEach((url) => URL.revokeObjectURL(url)); urls.clear(); };
+  }, []);
+
+  const retained = existing.filter((item) => !deletedIds.has(item.id));
+  const activeCount = retained.length + pending.length;
+  const save = useMutation({
+    mutationFn: async () => {
+      setSaveMessage(pending.length ? "Uploading images…" : "Saving…");
+      const uploaded = await uploadProviderGalleryImages(providerSlug, pending.map((item) => item.file));
+      setSaveMessage("Updating gallery…");
+      const payload = new FormData();
+      [...retained, ...uploaded].forEach((item) => payload.append("existing_ids", item.id));
+      return updateProviderGallery(providerSlug, payload);
+    },
+    onMutate: () => setError(null),
+    onSuccess: async (results) => {
+      previewUrls.current.forEach((url) => URL.revokeObjectURL(url));
+      previewUrls.current.clear();
+      setExisting(results);
+      setPending([]);
+      setDeletedIds(new Set());
+      queryClient.setQueryData(queryKey, results);
+      await onSaved();
+      onClose();
+    },
+    onError: (requestError) => {
+      const detail = axios.isAxiosError(requestError) ? requestError.response?.data?.detail : null;
+      setError(typeof detail === "string" ? detail : requestError instanceof Error ? requestError.message : "Unable to save gallery. Your changes have been preserved.");
+    },
+  });
+
+  async function addFiles(files: FileList) {
+    if (preparingFiles.current || save.isPending) return;
+    const selectedImages = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    if (pending.length >= 5) {
+      setError("You can select up to 5 new images at a time. Save or remove selected images before adding more.");
+      return;
+    }
+    preparingFiles.current = true;
+    setIsPreparing(true);
+    setError(null);
+    try {
+      const available = Math.max(0, Math.min(5 - pending.length, maximumImages - activeCount));
+      if (selectedImages.length > available) setError(available > 0
+        ? `Only the first ${available} selected image${available === 1 ? " was" : "s were"} added. Maximum 5 new images at a time, up to ${maximumImages} in the gallery.`
+        : `The gallery limit is ${maximumImages} images. Remove an image before adding more.`);
+      const compressed = await Promise.all(selectedImages.slice(0, available).map((file) => compressImage(file, { maxWidth: 1024, quality: 0.95 })));
+      const additions = compressed.map((file) => {
+        const previewUrl = URL.createObjectURL(file);
+        previewUrls.current.add(previewUrl);
+        return { id: clientId(), file, previewUrl };
+      });
+      setPending((current) => [...current, ...additions]);
+    } catch (compressionError) {
+      setError(compressionError instanceof Error ? compressionError.message : "Unable to prepare the selected images.");
+    } finally {
+      preparingFiles.current = false;
+      setIsPreparing(false);
+    }
+  }
+
+  function removePending(id: string) {
+    setPending((current) => current.filter((item) => { if (item.id !== id) return true; URL.revokeObjectURL(item.previewUrl); previewUrls.current.delete(item.previewUrl); return false; }));
+  }
+
+  return <FullScreenModal open onClose={() => !save.isPending && onClose()} title="Provider gallery"><div className="min-h-dvh bg-slate-50 pb-8"><MobileHeader title="Provider Gallery" subtitle={providerName} onBack={onClose} /><main className="mx-auto w-full max-w-3xl px-page pt-5"><div className="mb-4 flex items-center justify-between"><p className="text-sm font-bold">{activeCount} of {maximumImages} images</p><p className="text-xs text-foreground-muted">Maximum 5 images at a time. If you select more, only the first 5 are added.</p></div>{query.isPending && <p className="py-10 text-center text-sm text-foreground-muted">Loading images…</p>}{query.isError && <div role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-danger">Couldn&apos;t load the gallery. <button type="button" onClick={() => void query.refetch()} className="font-extrabold underline">Try again</button></div>}{initialized && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{existing.map((item) => { const deleted = deletedIds.has(item.id); return <article key={item.id} className={`relative aspect-square overflow-hidden rounded-xl bg-slate-100 ${deleted ? "opacity-50" : ""}`}><img src={item.image} alt="" className="size-full object-cover" />{deleted && <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-xs font-extrabold text-white">Will be removed</span>}<button type="button" onClick={() => setDeletedIds((current) => { const next = new Set(current); if (deleted) next.delete(item.id); else next.add(item.id); return next; })} aria-label={deleted ? "Keep image" : "Remove image"} className={`absolute right-2 top-2 rounded-full px-2.5 py-1.5 text-xs font-extrabold shadow ${deleted ? "bg-white text-brand" : "bg-white/90 text-danger"}`}>{deleted ? "Undo" : <i className="fa-solid fa-trash" />}</button></article>; })}{pending.map((item) => <article key={item.id} className="relative aspect-square overflow-hidden rounded-xl border-2 border-brand bg-slate-100"><img src={item.previewUrl} alt="New image preview" className="size-full object-cover" /><span className="absolute left-2 top-2 rounded-full bg-brand px-2 py-1 text-[10px] font-extrabold text-white">New</span><button type="button" onClick={() => removePending(item.id)} aria-label="Remove new image" className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-white/90 text-danger shadow"><i className="fa-solid fa-trash" /></button></article>)}{activeCount < maximumImages && pending.length < 5 && <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-brand-200 bg-white p-4 text-center text-brand hover:bg-brand-50"><i className="fa-solid fa-plus text-2xl" /><span className="mt-2 text-xs font-extrabold">Select images</span><input type="file" accept="image/*" multiple disabled={isPreparing || save.isPending} className="sr-only" onChange={(event: ChangeEvent<HTMLInputElement>) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} /></label>}</div>}{error && <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-danger">{error}</p>}<button type="button" disabled={!initialized || save.isPending || isPreparing} onClick={() => save.mutate()} className="mt-5 h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-50">{save.isPending ? saveMessage : "Save gallery"}</button></main></div></FullScreenModal>;
+}
+
