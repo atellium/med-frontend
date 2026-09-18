@@ -281,7 +281,7 @@ export function ProviderOverview({ provider, slug }: { provider: ProviderNameDet
         {services.length > 0 && (
           <section className="mt-4" aria-labelledby="provider-services-heading">
             <h2 id="provider-services-heading" className="text-base font-extrabold tracking-tight text-foreground dark:text-foreground-dark">
-              Services
+              Services & facilities
             </h2>
             <ul className="mt-1.5 space-y-2 p-3  rounded-xl border border-border-subtle">
               {services.map((service, index) => (
