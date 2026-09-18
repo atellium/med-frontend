@@ -2,9 +2,9 @@ const CACHE_NAME = "med-shell-v2";
 const APP_SHELL = [
 	"/",
 	"/manifest.webmanifest",
-	"/app-icons/icon-128X128.png",
-	"/app-icons/icon-256X256.png",
-	"/app-icons/icon-512X512.png",
+	"/app-icons/app-icon-128X128.png",
+	"/app-icons/app-icon-256X256.png",
+	"/app-icons/app-icon-512X512.png",
 ];
 
 self.addEventListener("install", (event) => {

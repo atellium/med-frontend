@@ -52,8 +52,8 @@ export function ProviderDetailImage({ thumbnail, providerName }: { thumbnail: st
     }
   }
 
-  return <><div className="relative aspect-video w-full bg-slate-50">
-    <Image src={thumbnail || "/images/default.jpg"} alt={providerName} fill priority sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />
+  return <><div className="relative h-[calc(56.25vw+100px)] max-h-[460px] min-h-[280px] w-full bg-slate-50">
+    <Image src={thumbnail || "/images/default.jpg"} alt={providerName} fill priority sizes="(max-width: 768px) 100vw, 768px" className="object-cover object-top" />
     <button
       type="button"
       onClick={() => router.back()}

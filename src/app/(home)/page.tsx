@@ -13,7 +13,7 @@ const title = "Discover Local Providers & Services Near You | MedNearby";
 const description =
 	"Discover trusted local providers, services, shops, and professionals near you. Explore popular categories and connect with providers in your community.";
 
-const appIconUrl = new URL("/app-icons/icon-1024X1024.png", getSiteUrl()).toString();
+const appIconUrl = new URL("/app-icons/app-icon-1024X1024.png", getSiteUrl()).toString();
 
 export const metadata: Metadata = {
 	title: { absolute: title },
@@ -95,7 +95,7 @@ export default function Home() {
 				"@id": `${siteUrl}#organization`,
 				name: "MedNearby",
 				url: siteUrl.toString(),
-				logo: new URL("/app-icons/icon-512X512.png", siteUrl).toString(),
+				logo: new URL("/app-icons/app-icon-512X512.png", siteUrl).toString(),
 				description,
 			},
 		],
