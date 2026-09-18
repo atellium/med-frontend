@@ -8,7 +8,7 @@ import MobileHeader from "@/components/layout/MobileHeader";
 import { BottomSheetModal } from "@/components/modals";
 import { getProviderNameBySlug } from "@/features/providers/provider.service";
 
-const QR_ICON_SRC = "/app-icons/med-icon-1024X1024.png";
+const QR_ICON_SRC = "/app-icons/icon-1024X1024.png";
 
 export function ProviderDashboardScreen({ slug }: { slug: string }) {
   const [qrOpen, setQrOpen] = useState(false);

@@ -35,7 +35,7 @@ export async function getPopularCategories(signal?: AbortSignal) {
 export async function getFeaturedDoctorSpecialties(signal?: AbortSignal) {
 	const { data } = await publicApiClient.get<DoctorSpecialtiesResponse>(
 		"/api/doctors/specialties/",
-		{ params: { is_featured: true }, signal },
+		{ params: { is_featured: true, page_size: 50 }, signal },
 	);
 
 	return data.results;
