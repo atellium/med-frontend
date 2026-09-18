@@ -7,16 +7,16 @@ import { useCategoryNavigation } from "@/features/search/use-category-navigation
 const staticCategories: Array<CategorySearchItem & { image: string }> = [
 	{ id: 1, name: "Doctors", label: "Doctors", slug: "doctors", aliases: "doctor, physician, specialist", type: "provider_category", image: "/images/category/doctors.png" },
 	{ id: 2, name: "Pharmacy", label: "Pharmacy", slug: "pharmacies", aliases: "pharmacy, medicines, medical store", type: "provider_category", image: "/images/category/medicine.png" },
-	{ id: 3, name: "Diagnostics", label: "Diagnostics", slug: "diagnostics", aliases: "diagnostic centre, lab, pathology", type: "provider_category", image: "/images/category/diagnostics.png" },
-	{ id: 4, name: "Dental Care", label: "Dental", slug: "dentals", aliases: "dentist, dental clinic", type: "provider_category", image: "/images/category/dentals.png" },
-	{ id: 5, name: "Eye Care", label: "Eye Care", slug: "eye", aliases: "eye clinic, ophthalmologist, optical", type: "provider_category", image: "/images/category/eye.png" },
-	{ id: 6, name: "Homeopathy", label: "Homeopathy", slug: "homeopathy", aliases: "cardiology, cardiologist", type: "provider_category", image: "/images/category/homeopathy.png" },
-	{ id: 7, name: "Nurse & Aya", label: "Nurse & Aya", slug: "nurse-aya", aliases: "nursing care, aya, caregiver", type: "provider_category", image: "/images/category/nurse-aya.png" },
-	{ id: 8, name: "Physiotherapist", label: "Physiotherapist", slug: "physiotherapist", aliases: "physio, physiotherapy", type: "provider_category", image: "/images/category/physiotherapist.png" },
+	{ id: 3, name: "Diagnostics", label: "Diagnostics", slug: "diagnostic-centres", aliases: "diagnostic centre, lab, pathology", type: "provider_category", image: "/images/category/diagnostics.png" },
+	{ id: 4, name: "Dental Care", label: "Dental", slug: "dental-clinics", aliases: "dentist, dental clinic", type: "provider_category", image: "/images/category/dentals.png" },
+	{ id: 5, name: "Eye Care", label: "Eye Care", slug: "eye-care-centres", aliases: "eye clinic, ophthalmologist, optical", type: "provider_category", image: "/images/category/eye.png" },
+	{ id: 6, name: "Homeopathy", label: "Homeopathy", slug: "homeopathy-clinics", aliases: "cardiology, cardiologist", type: "provider_category", image: "/images/category/homeopathy.png" },
+	{ id: 7, name: "Nurse & Aya", label: "Nurse & Aya", slug: "nurse-aya-centres", aliases: "nursing care, aya, caregiver", type: "provider_category", image: "/images/category/nurse-aya.png" },
+	{ id: 8, name: "Physiotherapist", label: "Physiotherapist", slug: "physiotherapy-centres", aliases: "physio, physiotherapy", type: "provider_category", image: "/images/category/physiotherapist.png" },
 	{ id: 9, name: "Nursing Home", label: "Nursing Home", slug: "nursing-homes", aliases: "nursing home", type: "provider_category", image: "/images/category/nursing-home.png" },
 	{ id: 10, name: "Hospitals", label: "Hospitals", slug: "hospitals", aliases: "hospital, nursing home", type: "provider_category", image: "/images/category/hospitals.png" },
-	{ id: 11, name: "Blood Bank", label: "Blood Bank", slug: "blood-bank", aliases: "blood bank, blood donation", type: "provider_category", image: "/images/category/blood-bank.png" },
-	{ id: 21, name: "Ambulance", label: "Ambulance", slug: "ambulance", aliases: "emergency ambulance", type: "provider_category", image: "/images/category/ambulance.png" },
+	{ id: 11, name: "Blood Bank", label: "Blood Bank", slug: "blood-banks", aliases: "blood bank, blood donation", type: "provider_category", image: "/images/category/blood-bank.png" },
+	{ id: 21, name: "Ambulance", label: "Ambulance", slug: "ambulance-services", aliases: "emergency ambulance", type: "provider_category", image: "/images/category/ambulance.png" },
 	
 ];
 

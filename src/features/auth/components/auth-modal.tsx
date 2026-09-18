@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -322,7 +323,7 @@ export function AuthModal({ open, onClose, onComplete }: AuthModalProps) {
 										autoComplete="tel-national"
 										autoFocus
 										maxLength={10}
-										placeholder="98765 43210"
+										placeholder="Enter Phone Number"
 										className="min-w-0 flex-1 bg-transparent px-3 text-[16px] font-extrabold tracking-wide text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-300"
 									/>
 								</div>
@@ -346,6 +347,17 @@ export function AuthModal({ open, onClose, onComplete }: AuthModalProps) {
 									"Continue"
 								)}
 							</button>
+							<p className="-mt-1 px-2 text-center text-[11px] font-semibold leading-5 text-slate-500">
+								By continuing, you agree to our{" "}
+								<Link href="/terms" className="font-extrabold text-brand">
+									Terms
+								</Link>{" "}
+								and{" "}
+								<Link href="/privacy" className="font-extrabold text-brand">
+									Privacy Policy
+								</Link>
+								.
+							</p>
 						</form>
 					)}
 
