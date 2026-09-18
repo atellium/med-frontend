@@ -10,7 +10,7 @@ const nunito = Nunito({
 	subsets: ["latin"],
 });
 
-const appIconUrl = new URL("/app-icons/icon-1024X1024.png", getSiteUrl()).toString();
+const appIconUrl = new URL("/app-icons/app-icon-1024X1024.png", getSiteUrl()).toString();
 
 export const metadata: Metadata = {
 	metadataBase: getSiteUrl(),
@@ -59,17 +59,17 @@ export const metadata: Metadata = {
 	},
 	icons: {
 		icon: [
-			{ url: "/app-icons/icon-128X128.png", sizes: "128x128", type: "image/png" },
-			{ url: "/app-icons/icon-256X256.png", sizes: "256x256", type: "image/png" },
-			{ url: "/app-icons/icon-512X512.png", sizes: "512x512", type: "image/png" },
-			{ url: "/app-icons/icon-1024X1024.png", sizes: "1024x1024", type: "image/png" },
+			{ url: "/app-icons/app-icon-128X128.png", sizes: "128x128", type: "image/png" },
+			{ url: "/app-icons/app-icon-256X256.png", sizes: "256x256", type: "image/png" },
+			{ url: "/app-icons/app-icon-512X512.png", sizes: "512x512", type: "image/png" },
+			{ url: "/app-icons/app-icon-1024X1024.png", sizes: "1024x1024", type: "image/png" },
 		],
 		shortcut: {
-			url: "/app-icons/icon-128X128.png",
+			url: "/app-icons/app-icon-128X128.png",
 			type: "image/png",
 		},
 		apple: {
-			url: "/app-icons/icon-256X256.png",
+			url: "/app-icons/app-icon-256X256.png",
 			sizes: "256x256",
 			type: "image/png",
 		},

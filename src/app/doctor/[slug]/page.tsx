@@ -8,7 +8,7 @@ type DoctorDetailPageProps = {
 };
 
 const appIconImage = {
-  url: new URL("/app-icons/icon-1024X1024.png", getSiteUrl()).toString(),
+  url: new URL("/app-icons/app-icon-1024X1024.png", getSiteUrl()).toString(),
   width: 1024,
   height: 1024,
   alt: "MedNearby app icon",

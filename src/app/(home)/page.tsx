@@ -8,12 +8,12 @@ import {
 } from "@/components/home";
 import { getSiteUrl } from "@/lib/site-url";
 
-const title = "Discover Local Providers & Services Near You | MedNearby";
+const title = "Find Doctors, Pharmacies & Healthcare Services Near You | MedNearby";
 
 const description =
-	"Discover trusted local providers, services, shops, and professionals near you. Explore popular categories and connect with providers in your community.";
+	"Find nearby doctors, pharmacies, clinics, diagnostic centres, hospitals and other healthcare services with MedNearby. Search local medical providers, view details and connect easily.";
 
-const appIconUrl = new URL("/app-icons/icon-1024X1024.png", getSiteUrl()).toString();
+const appIconUrl = new URL("/app-icons/app-icon-1024X1024.png", getSiteUrl()).toString();
 
 export const metadata: Metadata = {
 	title: { absolute: title },
@@ -95,7 +95,7 @@ export default function Home() {
 				"@id": `${siteUrl}#organization`,
 				name: "MedNearby",
 				url: siteUrl.toString(),
-				logo: new URL("/app-icons/icon-512X512.png", siteUrl).toString(),
+				logo: new URL("/app-icons/app-icon-512X512.png", siteUrl).toString(),
 				description,
 			},
 		],

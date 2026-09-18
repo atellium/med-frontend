@@ -24,14 +24,24 @@ function normalize(value: unknown) {
 		: "";
 }
 
-function categorySearchValues(category: CategorySearchItem) {
+function categoryAliases(category: CategorySearchItem) {
 	const aliases = Array.isArray(category.aliases)
 		? category.aliases
 		: category.aliases?.split(",") ?? [];
 
-	return [category.name, category.label, ...aliases]
+	return aliases
 		.map(normalize)
 		.filter(Boolean);
+}
+
+function categoryPrimarySearchValues(category: CategorySearchItem) {
+	return [category.name, category.label]
+		.map(normalize)
+		.filter(Boolean);
+}
+
+function categorySearchValues(category: CategorySearchItem) {
+	return [...categoryPrimarySearchValues(category), ...categoryAliases(category)];
 }
 
 export function matchesCategoryPrefix(
@@ -47,29 +57,36 @@ export function matchesCategoryPrefix(
 
 export function getCategorySearchRank(category: CategorySearchItem, query: string) {
 	const normalizedQuery = normalize(query);
-	const values = categorySearchValues(category);
+	const primaryValues = categoryPrimarySearchValues(category);
+	const aliasValues = categoryAliases(category);
 
-	if (values.some((value) => value === normalizedQuery)) return 0;
-	if (values.some((value) => value.split(/\s+/).some((word) => word === normalizedQuery))) return 1;
-	if (values.some((value) => value.startsWith(normalizedQuery))) return 2;
-	if (values.some((value) => value.split(/\s+/).some((word) => word.startsWith(normalizedQuery)))) return 3;
-	return 4;
+	if (primaryValues.some((value) => value === normalizedQuery)) return 0;
+	if (primaryValues.some((value) => value.startsWith(normalizedQuery))) return 1;
+	if (primaryValues.some((value) => value.split(/\s+/).some((word) => word === normalizedQuery))) return 2;
+	if (primaryValues.some((value) => value.split(/\s+/).some((word) => word.startsWith(normalizedQuery)))) return 3;
+	if (aliasValues.some((value) => value === normalizedQuery)) return 4;
+	if (aliasValues.some((value) => value.startsWith(normalizedQuery))) return 5;
+	if (aliasValues.some((value) => value.split(/\s+/).some((word) => word === normalizedQuery))) return 6;
+	if (aliasValues.some((value) => value.split(/\s+/).some((word) => word.startsWith(normalizedQuery)))) return 7;
+	return 8;
 }
 
 export function getCategorySearchMatchLength(category: CategorySearchItem, query: string) {
 	const normalizedQuery = normalize(query);
-	const values = categorySearchValues(category);
 	const rank = getCategorySearchRank(category, normalizedQuery);
+	const values = rank < 4
+		? categoryPrimarySearchValues(category)
+		: categoryAliases(category);
 	const matchingLengths = values.flatMap((value) => {
-		if (rank === 0 && value === normalizedQuery) return [value.length];
-		if (rank === 1) {
+		if ((rank === 0 || rank === 4) && value === normalizedQuery) return [value.length];
+		if ((rank === 1 || rank === 5) && value.startsWith(normalizedQuery)) return [value.length];
+		if (rank === 2 || rank === 6) {
 			return value
 				.split(/\s+/)
 				.filter((word) => word === normalizedQuery)
 				.map((word) => word.length);
 		}
-		if (rank === 2 && value.startsWith(normalizedQuery)) return [value.length];
-		if (rank === 3) {
+		if (rank === 3 || rank === 7) {
 			return value
 				.split(/\s+/)
 				.filter((word) => word.startsWith(normalizedQuery))

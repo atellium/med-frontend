@@ -8,7 +8,7 @@ type ProviderPageProps = {
 };
 
 const appIconImage = {
-  url: new URL("/app-icons/icon-1024X1024.png", getSiteUrl()).toString(),
+  url: new URL("/app-icons/app-icon-1024X1024.png", getSiteUrl()).toString(),
   width: 1024,
   height: 1024,
   alt: "MedNearby app icon",
@@ -28,9 +28,9 @@ export async function generateMetadata({ params }: ProviderPageProps): Promise<M
     const location = [provider.location.locality, provider.location.city.name]
       .filter(Boolean)
       .join(", ");
-    const title = location ? `${provider.name} in ${location}` : provider.name;
+    const title = location ? `${provider.name} in ${location} | MedNearby` : provider.name;
     const description = provider.description?.trim()
-      || `Discover ${provider.name} in ${location}. View provider details, contact information, products, services, and opening hours on MedNearby.`;
+      || `Discover ${provider.name} in ${location}. View address, contact details, services, available doctors, timings, facilities and other information on MedNearby.`;
     const images = provider.media.thumbnail
       ? [{ url: getAbsoluteImageUrl(provider.media.thumbnail), alt: provider.name }]
       : [appIconImage];

@@ -1,14 +1,18 @@
 import type { MetadataRoute } from "next";
-import { getSiteUrl } from "@/lib/site-url";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = getSiteUrl();
-  const routes = ["/", "/search", "/privacy", "/terms"];
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = "https://mednearby.in";
 
-  return routes.map((route) => ({
-    url: new URL(route, baseUrl).toString(),
+  const pages = [
+    "/kolkata/garia/doctors",
+    "/kolkata/garia/pharmacies",
+    "/kolkata/garia/clinics",
+  ];
+
+  return pages.map((path) => ({
+    url: `${baseUrl}${path}`,
     lastModified: new Date(),
-    changeFrequency: route === "/" ? "daily" : "weekly",
-    priority: route === "/" ? 1 : 0.7,
+    changeFrequency: "daily",
+    priority: 0.8,
   }));
 }

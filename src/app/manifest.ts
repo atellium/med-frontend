@@ -22,7 +22,7 @@ export default function manifest(): MetadataRoute.Manifest {
 		categories: ["lifestyle", "social"],
 		icons: (["any", "maskable"] as const).flatMap((purpose) =>
 			[128, 256, 512, 1024].map((size) => ({
-				src: `/app-icons/icon-${size}X${size}.png`,
+				src: `/app-icons/app-icon-${size}X${size}.png`,
 				sizes: `${size}x${size}`,
 				type: "image/png",
 				purpose,

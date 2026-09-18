@@ -74,11 +74,11 @@ export function InstallPrompt() {
 				<i className="fa-regular fa-xmark text-lg" aria-hidden="true" />
 			</button>
 			<Image
-				src="/app-icons/icon-128X128.png"
+				src="/app-icons/app-icon-128X128.png"
 				alt=""
 				width={40}
 				height={40}
-				className="size-10 shrink-0 "
+				className="size-10 shrink-0 rounded-xl shadow-md shadow-black/20"
 			/>
 			<p className="min-w-0 flex-1 text-sm font-bold ">
 				Install the app for a better experience
