@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import MobileHeader from "@/components/layout/MobileHeader";
@@ -8,8 +8,8 @@ import { getCategories, matchesCategoryPrefix } from "@/features/categories";
 import type { CategorySearchItem } from "@/features/categories";
 import { getDoctorBySlug, getProviderNameBySlug } from "@/features/providers/provider.service";
 import type { DoctorListItem, DoctorSpecialty } from "@/features/providers/provider.types";
-// import { compressImage } from "@/lib/compress-image";
-import { createDoctor, updateDoctor } from "../profile.service";
+import { compressImage } from "@/lib/compress-image";
+import { createDoctor, updateDoctor, updateDoctorProfileImage } from "../profile.service";
 import type { DoctorSchedulePayload, DoctorUpsertPayload } from "../profile.types";
 
 const inputClass = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-foreground outline-none focus:border-brand";
@@ -40,10 +40,9 @@ export function DoctorEditorScreen({ providerSlug, catalogSlug }: { providerSlug
   const [registrationCouncil, setRegistrationCouncil] = useState("");
   const [registrationYear, setRegistrationYear] = useState("");
   const [consultationFee, setConsultationFee] = useState("");
-  // Profile image upload is temporarily disabled.
-  // const [profileImage, setProfileImage] = useState<File | null>(null);
-  // const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
-  // const [profileImageError, setProfileImageError] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
+  const [profileImageError, setProfileImageError] = useState<string | null>(null);
   const [treatments, setTreatments] = useState("");
   const [languages, setLanguages] = useState("");
   const [schedules, setSchedules] = useState<ScheduleDraft[]>([]);
@@ -71,23 +70,27 @@ export function DoctorEditorScreen({ providerSlug, catalogSlug }: { providerSlug
     });
   }, [detail.data, initialized]);
 
-  // useEffect(() => () => {
-  //   if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
-  // }, [profileImagePreview]);
+  useEffect(() => () => {
+    if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
+  }, [profileImagePreview]);
 
   const save = useMutation({
-    mutationFn: (payload: DoctorUpsertPayload) => {
+    mutationFn: async (payload: DoctorUpsertPayload) => {
       if (!provider.data?.id) throw new Error("Provider not loaded.");
-      return editing ? updateDoctor(provider.data.id, detail.data!.id, payload) : createDoctor(provider.data.id, payload);
+      const response = editing ? await updateDoctor(provider.data.id, detail.data!.id, payload) : await createDoctor(provider.data.id, payload);
+      if (profileImage) {
+        const doctorId = editing ? detail.data!.id : doctorIdFromResponse(response);
+        if (!doctorId) throw new Error("Doctor was saved, but no doctor id was returned for image upload.");
+        await updateDoctorProfileImage(provider.data.id, doctorId, profileImage);
+      }
+      return response;
     },
-    onSuccess: async (response) => {
-      console.log(editing ? "Edit doctor response" : "Add doctor response", response);
+    onSuccess: async () => {
       setIsRedirecting(true);
       await queryClient.invalidateQueries({ queryKey: ["provider", providerSlug, "doctors"] });
       router.replace(`/${encodeURIComponent(providerSlug)}/manage/doctors`);
     },
-    onError: (saveError) => {
-      console.log(editing ? "Edit doctor error response" : "Add doctor error response", saveError);
+    onError: () => {
       setIsRedirecting(false);
     },
   });
@@ -121,33 +124,36 @@ export function DoctorEditorScreen({ providerSlug, catalogSlug }: { providerSlug
     const treatmentList = splitList(treatments);
     if (treatmentList.length > 0) payload.treatments = treatmentList;
     if (schedulePayload.length > 0) payload.schedules = schedulePayload;
-    const savePayload = payload;
-    // Profile image upload is temporarily disabled.
-    // const savePayload = profileImage ? doctorPayloadToFormData(payload, profileImage) : payload;
-    logDoctorPayload(editing ? "Edit doctor payload" : "Add doctor payload", savePayload);
-    save.mutate(savePayload, { onError: () => setError(`Unable to ${editing ? "update" : "add"} doctor.`) });
+    save.mutate(payload, { onError: () => setError(`Unable to ${editing ? "update" : "add"} doctor.`) });
   }
 
-  // async function selectProfileImage(event: ChangeEvent<HTMLInputElement>) {
-  //   const selected = event.target.files?.[0];
-  //   event.target.value = "";
-  //   if (!selected) return;
-  //   try {
-  //     const compressed = await compressImage(selected, { maxWidth: 600, quality: 0.9 });
-  //     if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
-  //     setProfileImage(compressed);
-  //     setProfileImagePreview(URL.createObjectURL(compressed));
-  //     setProfileImageError(null);
-  //   } catch (compressionError) {
-  //     setProfileImageError(compressionError instanceof Error ? compressionError.message : "Unable to prepare the selected image.");
-  //   }
-  // }
+  async function selectProfileImage(event: ChangeEvent<HTMLInputElement>) {
+    const selected = event.target.files?.[0];
+    event.target.value = "";
+    if (!selected) return;
+    try {
+      const compressed = await compressImage(selected, { maxWidth: 400, quality: 0.95 });
+      if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
+      setProfileImage(compressed);
+      setProfileImagePreview(URL.createObjectURL(compressed));
+      setProfileImageError(null);
+    } catch (compressionError) {
+      setProfileImageError(compressionError instanceof Error ? compressionError.message : "Unable to prepare the selected image.");
+    }
+  }
+
+  function clearProfileImage() {
+    if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
+    setProfileImage(null);
+    setProfileImagePreview(null);
+    setProfileImageError(null);
+  }
 
   if (editing && detail.isPending) return <div className="min-h-dvh bg-slate-50"><MobileHeader title="Edit Doctor" subtitle={provider.data?.name ?? "Loading provider..."} /><p className="py-12 text-center text-sm text-foreground-muted">Loading doctor...</p></div>;
   if (editing && detail.isError) return <div className="min-h-dvh bg-slate-50"><MobileHeader title="Edit Doctor" subtitle={provider.data?.name} /><p className="py-12 text-center text-sm font-semibold text-danger">Doctor not found.</p></div>;
 
   return <div className="min-h-dvh bg-slate-50 pb-10"><MobileHeader title={editing ? "Edit Doctor" : "Add Doctor"} subtitle={provider.data?.name ?? "Loading provider..."} /><form onSubmit={submit} className="mx-auto w-full max-w-3xl space-y-4 px-page pt-5">
-    <FormCard title="Doctor details"><Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter doctor name" className={inputClass} /></Field><Field label="Qualification"><input value={qualification} onChange={(e) => setQualification(e.target.value)} placeholder="MBBS, MD (Medicine)" className={inputClass} /></Field>{/* Profile image upload is temporarily disabled. */}<Field label="Bio"><textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Short profile summary" rows={4} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-brand" /></Field></FormCard>
+    <FormCard title="Doctor details"><Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter doctor name" className={inputClass} /></Field><Field label="Qualification"><input value={qualification} onChange={(e) => setQualification(e.target.value)} placeholder="MBBS, MD (Medicine)" className={inputClass} /></Field><ProfileImagePicker source={profileImagePreview ?? detail.data?.profile_image ?? null} hasNewImage={Boolean(profileImage)} error={profileImageError} disabled={isBusy} onSelect={selectProfileImage} onClear={clearProfileImage} /><Field label="Bio"><textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Short profile summary" rows={4} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-brand" /></Field></FormCard>
     <SpecialtyPicker selected={specialties} onChange={setSpecialties} />
     <FormCard title="Professional details"><Field label="Registration number"><input value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} placeholder="WBMC-12345" className={inputClass} /></Field><Field label="Registration council"><input value={registrationCouncil} onChange={(e) => setRegistrationCouncil(e.target.value)} placeholder="West Bengal Medical Council" className={inputClass} /></Field><Field label="Registration year"><input inputMode="numeric" maxLength={4} value={registrationYear} onChange={(e) => setRegistrationYear(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="2018" className={inputClass} /></Field></FormCard>
     <FormCard title="Consultation"><Field label="Consultation fee"><input type="number" min="0" step="0.01" value={consultationFee} onChange={(e) => setConsultationFee(e.target.value)} placeholder="900" className={inputClass} /></Field></FormCard>
@@ -178,52 +184,49 @@ function ScheduleEditor({ schedules, onChange }: { schedules: ScheduleDraft[]; o
   </FormCard>;
 }
 
-// Profile image upload is temporarily disabled.
-// function ProfileImagePicker({
-//   source,
-//   hasNewImage,
-//   error,
-//   disabled,
-//   onSelect,
-//   onClear,
-// }: {
-//   source: string | null;
-//   hasNewImage: boolean;
-//   error: string | null;
-//   disabled: boolean;
-//   onSelect: (event: ChangeEvent<HTMLInputElement>) => void;
-//   onClear: () => void;
-// }) {
-//   return <div>
-//     <p className="mb-1.5 text-xs font-bold text-foreground">Profile image</p>
-//     <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-//       <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-brand">
-//         {source ? (
-//           <>
-//             {/* Native image rendering supports both existing URLs and local blob preview URLs. */}
-//             {/* eslint-disable-next-line @next/next/no-img-element */}
-//             <img src={source} alt="Doctor profile preview" className="size-full object-cover" />
-//             {hasNewImage && <span className="absolute left-1 top-1 rounded-full bg-brand px-1.5 py-0.5 text-[9px] font-extrabold text-white">New</span>}
-//           </>
-//         ) : (
-//           <i className="fa-solid fa-user-doctor text-2xl" aria-hidden="true" />
-//         )}
-//       </div>
-//       <div className="min-w-0 flex-1">
-//         <p className="text-xs font-semibold text-foreground-muted">Select an image to compress to WebP, max 600px wide.</p>
-//         <div className="mt-2 flex flex-wrap gap-2">
-//           <label className="inline-flex h-9 cursor-pointer items-center justify-center rounded-lg bg-brand px-3 text-xs font-extrabold text-white">
-//             <i className="fa-solid fa-image mr-1.5" aria-hidden="true" />
-//             Select image
-//             <input type="file" accept="image/*" disabled={disabled} onChange={onSelect} className="sr-only" />
-//           </label>
-//           {hasNewImage && <button type="button" onClick={onClear} disabled={disabled} className="h-9 rounded-lg border border-slate-200 px-3 text-xs font-extrabold text-foreground">Clear</button>}
-//         </div>
-//       </div>
-//     </div>
-//     {error && <p role="alert" className="mt-2 text-sm font-semibold text-danger">{error}</p>}
-//   </div>;
-// }
+function ProfileImagePicker({
+  source,
+  hasNewImage,
+  error,
+  disabled,
+  onSelect,
+  onClear,
+}: {
+  source: string | null;
+  hasNewImage: boolean;
+  error: string | null;
+  disabled: boolean;
+  onSelect: (event: ChangeEvent<HTMLInputElement>) => void;
+  onClear: () => void;
+}) {
+  return <div>
+    <p className="mb-1.5 text-xs font-bold text-foreground">Profile image</p>
+    <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+      <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white text-brand">
+        {source ? (
+          <>
+            <img src={source} alt="Doctor profile preview" className="size-full object-cover" />
+            {hasNewImage && <span className="absolute left-1 top-1 rounded-full bg-brand px-1.5 py-0.5 text-[9px] font-extrabold text-white">New</span>}
+          </>
+        ) : (
+          <i className="fa-solid fa-user-doctor text-2xl" aria-hidden="true" />
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold text-foreground-muted">Select doctor profile image.</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <label className={`inline-flex h-9 items-center justify-center rounded-lg bg-brand px-3 text-xs font-extrabold text-white ${disabled ? "opacity-60" : "cursor-pointer"}`}>
+            <i className="fa-solid fa-image mr-1.5" aria-hidden="true" />
+            Select image
+            <input type="file" accept="image/*" disabled={disabled} onChange={onSelect} className="sr-only" />
+          </label>
+          {hasNewImage && <button type="button" onClick={onClear} disabled={disabled} className="h-9 rounded-lg border border-slate-200 px-3 text-xs font-extrabold text-foreground disabled:opacity-60">Clear</button>}
+        </div>
+      </div>
+    </div>
+    {error && <p role="alert" className="mt-2 text-sm font-semibold text-danger">{error}</p>}
+  </div>;
+}
 
 type DoctorSpecialtyOption = CategorySearchItem & { id: number };
 
@@ -252,30 +255,11 @@ function toSchedulePayload(schedule: ScheduleDraft): DoctorSchedulePayload {
   return { schedule_type: schedule.schedule_type, weekday: schedule.schedule_type === "monthly_date" ? null : Number(schedule.weekday), week_of_month: schedule.schedule_type === "monthly_weekday" ? Number(schedule.week_of_month) : null, day_of_month: schedule.schedule_type === "monthly_date" ? Number(schedule.day_of_month) : null, ...(schedule.consultation_type.trim() ? { consultation_type: schedule.consultation_type } : {}), start_time: withSeconds(schedule.start_time), end_time: withSeconds(schedule.end_time), is_active: schedule.is_active };
 }
 
-// Profile image upload is temporarily disabled.
-// function doctorPayloadToFormData(payload: DoctorUpsertPayload, profileImage: File) {
-//   const formData = new FormData();
-//   Object.entries(payload).forEach(([key, value]) => {
-//     if (value === undefined || value === null) return;
-//     if (Array.isArray(value) || typeof value === "object") formData.append(key, JSON.stringify(value));
-//     else formData.append(key, String(value));
-//   });
-//   formData.append("profile_image", profileImage);
-//   return formData;
-// }
-
-function logDoctorPayload(label: string, payload: DoctorUpsertPayload | FormData) {
-  if (!(payload instanceof FormData)) {
-    console.log(label, payload);
-    return;
-  }
-
-  console.log(label, Object.fromEntries(Array.from(payload.entries()).map(([key, value]) => [
-    key,
-    value instanceof File
-      ? { name: value.name, type: value.type, size: value.size }
-      : value,
-  ])));
+function doctorIdFromResponse(response: unknown) {
+  if (!response || typeof response !== "object") return null;
+  const data = response as { id?: unknown; result?: { id?: unknown }; doctor?: { id?: unknown } };
+  const id = data.id ?? data.result?.id ?? data.doctor?.id;
+  return typeof id === "string" ? id : null;
 }
 
 function categoryKey(category: DoctorSpecialtyOption, index: number) { return `${category.id ?? category.slug ?? category.name}-${index}`; }

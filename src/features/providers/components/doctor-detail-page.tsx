@@ -177,9 +177,7 @@ function DoctorDetail({ doctor }: { doctor: DoctorListItem }) {
     <div className="space-y-3">
       <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-border-dark-subtle dark:bg-surface-dark">
         <div className="flex items-start gap-3">
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100 dark:bg-cyan-950 dark:text-cyan-200 dark:ring-cyan-900">
-            <i className="fa-solid fa-user-doctor text-2xl" aria-hidden="true" />
-          </span>
+          <DoctorAvatar doctor={doctor} />
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -246,6 +244,12 @@ function DoctorDetail({ doctor }: { doctor: DoctorListItem }) {
 
     </div>
   );
+}
+
+function DoctorAvatar({ doctor }: { doctor: DoctorListItem }) {
+  return <span className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100 dark:bg-cyan-950 dark:text-cyan-200 dark:ring-cyan-900">
+    {doctor.profile_image ? <Image src={doctor.profile_image} alt="" fill sizes="56px" className="object-cover" /> : <i className="fa-solid fa-user-doctor text-2xl" aria-hidden="true" />}
+  </span>;
 }
 
 function InfoGroup({ title, items, icon }: { title: string; items: string[]; icon?: React.ReactNode }) {

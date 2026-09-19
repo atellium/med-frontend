@@ -114,6 +114,13 @@ export async function updateDoctor(providerId: string, doctorId: string, payload
   return data;
 }
 
+export async function updateDoctorProfileImage(providerId: string, doctorId: string, file: File) {
+  const payload = new FormData();
+  payload.append("profile_image", file);
+  const { data } = await protectedApiClient.patch(`${providerDoctorsUrl(providerId)}${encodeURIComponent(doctorId)}/`, payload);
+  return data;
+}
+
 export async function deleteDoctor(providerId: string, doctorId: string) {
   await protectedApiClient.delete(`${providerDoctorsUrl(providerId)}${encodeURIComponent(doctorId)}/`);
 }
@@ -214,6 +221,12 @@ export async function updateOwnedProvider(providerId: string, payload: ProviderU
   const provider = providerInfoFromResponse(data);
   if (!provider) throw new Error("Provider update returned no result.");
   return normalizeOwnedProviderInfo(provider);
+}
+
+export async function updateProviderCoverImage(providerId: string, file: File) {
+  const payload = new FormData();
+  payload.append("cover_image", file);
+  await protectedApiClient.patch(`/api/providers/my/${encodeURIComponent(providerId)}/`, payload);
 }
 
 export async function updateProviderHours(slug: string, payload: ProviderHoursUpdatePayload) {
