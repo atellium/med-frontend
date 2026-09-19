@@ -1,30 +1,37 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileHeader from "@/components/layout/MobileHeader";
 import { getProviderNameBySlug } from "@/features/providers/provider.service";
 import type { ProviderNameDetail } from "@/features/providers/provider.types";
+import { useAppSelector } from "@/store/hooks";
+import { ProviderThumbnailCard } from "./provider-thumbnail-card";
 
 const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 const supportNumber = (process.env.NEXT_PUBLIC_COMYNITY_WHATSAPP_NUMBER ?? "919876543210").replace(/\D/g, "");
+const thumbnailEditorPhone = "+916295828230";
 
 export function ProviderInfoScreen({ slug }: { slug: string }) {
+  const queryClient = useQueryClient();
+  const userPhone = useAppSelector((state) => state.auth.user?.phone);
+  const queryKey = ["provider", "public-details", slug, "manage-info"] as const;
   const query = useQuery({
-    queryKey: ["provider", "public-details", slug, "manage-info"],
+    queryKey,
     queryFn: () => getProviderNameBySlug(slug),
   });
+  const canEditThumbnail = normalizePhone(userPhone) === normalizePhone(thumbnailEditorPhone);
 
   return <div className="min-h-dvh bg-slate-50 pb-10">
     <MobileHeader title="Provider Information" subtitle={query.data?.name ?? "Loading provider..."} />
     <main className="mx-auto w-full max-w-3xl space-y-4 px-page pt-5">
       {query.isPending && <InfoSkeleton />}
       {query.isError && <div role="alert" className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-danger"><p className="font-semibold">Couldn&apos;t load provider information.</p><button type="button" onClick={() => void query.refetch()} className="mt-2 font-extrabold underline">Try again</button></div>}
-      {query.data && <ProviderInfoCards provider={query.data} />}
+      {query.data && <ProviderInfoCards provider={query.data} canEditThumbnail={canEditThumbnail} onSaved={() => void queryClient.invalidateQueries({ queryKey })} />}
     </main>
   </div>;
 }
 
-function ProviderInfoCards({ provider }: { provider: ProviderNameDetail }) {
+function ProviderInfoCards({ provider, canEditThumbnail, onSaved }: { provider: ProviderNameDetail; canEditThumbnail: boolean; onSaved: () => void }) {
   const categories = provider.categories?.map((category) => category.display_name).filter(Boolean).join(", ");
   const offerings = provider.offerings?.map((offering) => offering.trim()).filter(Boolean).join(", ");
   const city = provider.location.city.name;
@@ -36,6 +43,7 @@ function ProviderInfoCards({ provider }: { provider: ProviderNameDetail }) {
 
   return <>
     <SupportCard providerName={provider.name} />
+    <ProviderThumbnailCard provider={provider} canEdit={canEditThumbnail} onSaved={onSaved} />
     <InfoCard title="Basic information" icon="fa-building"><InfoRow label="Name" value={provider.name} /><InfoRow label="Description" value={provider.description} multiline /><InfoRow label="Categories" value={categories} /><InfoRow label="Offerings" value={offerings} /></InfoCard>
     <InfoCard title="Address" icon="fa-location-dot"><InfoRow label="Address" value={provider.location.address} /><InfoRow label="Landmark" value={provider.location.landmark} /><InfoRow label="Locality" value={provider.location.locality} /><InfoRow label="City" value={city} /><InfoRow label="State" value={state} /><InfoRow label="Postal code" value={provider.location.postal_code} /><InfoRow label="Show full address" value={yesNo(provider.location.display_full_address)} /></InfoCard>
     <InfoCard title="Contact information" icon="fa-address-book"><InfoRow label="Phone" value={provider.contact.phone} /><InfoRow label="WhatsApp" value={provider.contact.whatsapp} /><InfoRow label="Other numbers" value={provider.contact.alternate_numbers?.join(", ")} /><InfoRow label="Email" value={provider.contact.email} /><InfoRow label="Website" value={provider.contact.website} /></InfoCard>
@@ -88,6 +96,11 @@ function humanize(value: string) {
 
 function yesNo(value: boolean) {
   return value ? "Yes" : "No";
+}
+
+function normalizePhone(value: string | null | undefined) {
+  const digits = (value ?? "").replace(/\D/g, "");
+  return digits.length === 10 ? `91${digits}` : digits;
 }
 
 function InfoSkeleton() {

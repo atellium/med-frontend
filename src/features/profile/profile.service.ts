@@ -216,6 +216,12 @@ export async function updateOwnedProvider(providerId: string, payload: ProviderU
   return normalizeOwnedProviderInfo(provider);
 }
 
+export async function updateProviderCoverImage(providerId: string, file: File) {
+  const payload = new FormData();
+  payload.append("cover_image", file);
+  await protectedApiClient.patch(`/api/providers/my/${encodeURIComponent(providerId)}/`, payload);
+}
+
 export async function updateProviderHours(slug: string, payload: ProviderHoursUpdatePayload) {
   await protectedApiClient.patch(
     `/api/providers/${encodeURIComponent(slug)}/hours/`,
