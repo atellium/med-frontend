@@ -114,6 +114,13 @@ export async function updateDoctor(providerId: string, doctorId: string, payload
   return data;
 }
 
+export async function updateDoctorProfileImage(providerId: string, doctorId: string, file: File) {
+  const payload = new FormData();
+  payload.append("profile_image", file);
+  const { data } = await protectedApiClient.patch(`${providerDoctorsUrl(providerId)}${encodeURIComponent(doctorId)}/`, payload);
+  return data;
+}
+
 export async function deleteDoctor(providerId: string, doctorId: string) {
   await protectedApiClient.delete(`${providerDoctorsUrl(providerId)}${encodeURIComponent(doctorId)}/`);
 }

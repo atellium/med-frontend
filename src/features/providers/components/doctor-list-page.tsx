@@ -146,9 +146,7 @@ function DoctorListingCard({ doctor }: { doctor: DoctorListItem }) {
     <article className="relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition-colors hover:border-cyan-200 dark:border-border-dark-subtle dark:bg-surface-dark dark:hover:border-cyan-900">
       <div className="relative z-20 p-3">
         <Link href={doctorHref} className="group flex items-start gap-2.5" aria-label={`View details for ${doctor.name}`}>
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100 dark:bg-cyan-950 dark:text-cyan-200 dark:ring-cyan-900">
-            <i className="fa-solid fa-user-doctor text-xl" aria-hidden="true" />
-          </span>
+          <DoctorAvatar doctor={doctor} className="size-12 rounded-full" iconClassName="text-xl" />
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2.5">
               <div className="min-w-0">
@@ -187,6 +185,12 @@ function DoctorListingCard({ doctor }: { doctor: DoctorListItem }) {
       </div>
     </article>
   );
+}
+
+function DoctorAvatar({ doctor, className, iconClassName }: { doctor: DoctorListItem; className: string; iconClassName: string }) {
+  return <span className={`relative flex shrink-0 items-center justify-center overflow-hidden bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100 dark:bg-cyan-950 dark:text-cyan-200 dark:ring-cyan-900 ${className}`}>
+    {doctor.profile_image ? <Image src={doctor.profile_image} alt="" fill sizes="48px" className="object-cover" /> : <i className={`fa-solid fa-user-doctor ${iconClassName}`} aria-hidden="true" />}
+  </span>;
 }
 
 function Action({ href, icon, label, external = false, brandIcon = false }: { href?: string; icon: string; label: string; external?: boolean; brandIcon?: boolean }) {

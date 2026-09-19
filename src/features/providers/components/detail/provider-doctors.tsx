@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { CalendarClock } from "lucide-react";
 import { getProviderDoctorList } from "../../provider.service";
@@ -44,9 +45,7 @@ function DoctorCard({ doctor, phone }: { doctor: DoctorListItem; phone: string |
   return <article className="group relative rounded-xl border border-brand-100 bg-white p-4 shadow-[0_4px_14px_rgba(15,23,42,0.06)] transition-colors hover:border-brand-200 dark:border-brand-900 dark:bg-surface-dark-secondary dark:hover:border-brand-800">
     <Link href={doctorHref} className="absolute inset-0 z-10 rounded-xl" aria-label={`View details for ${doctor.name}`} />
     <div className="relative flex items-start gap-3">
-      <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand dark:bg-brand-950 dark:text-brand-300">
-        <i className="fa-solid fa-user-doctor text-lg" aria-hidden="true" />
-      </span>
+      <DoctorAvatar doctor={doctor} />
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <h3 className="min-w-0 text-base font-extrabold leading-5 text-foreground transition-colors group-hover:text-brand dark:text-foreground-dark dark:group-hover:text-brand-300">{doctor.name}</h3>
@@ -60,6 +59,12 @@ function DoctorCard({ doctor, phone }: { doctor: DoctorListItem; phone: string |
     {doctor.schedule?.full_schedule && doctor.schedule.full_schedule.length > 0 && <FullSchedule doctor={doctor} />}
     {enquiryPhone && <a href={`tel:${enquiryPhone}`} className="relative z-20 mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white text-xs font-extrabold text-brand transition-colors hover:border-brand hover:bg-brand-50 dark:border-brand-800 dark:bg-surface-dark-secondary dark:text-brand-300 dark:hover:bg-brand-950/40"><i className="fa-solid fa-phone text-[11px]" aria-hidden="true" />Enquiry</a>}
   </article>;
+}
+
+function DoctorAvatar({ doctor }: { doctor: DoctorListItem }) {
+  return <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand-100 text-brand dark:bg-brand-950 dark:text-brand-300">
+    {doctor.profile_image ? <Image src={doctor.profile_image} alt="" fill sizes="48px" className="object-cover" /> : <i className="fa-solid fa-user-doctor text-lg" aria-hidden="true" />}
+  </span>;
 }
 
 function formatFee(value: string | null) {

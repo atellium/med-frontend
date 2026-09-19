@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileHeader from "@/components/layout/MobileHeader";
@@ -43,7 +44,13 @@ export function ProviderManageDoctorsScreen({ slug }: { slug: string }) {
 
 function DoctorRow({ slug, doctor, onDelete }: { slug: string; doctor: DoctorListItem; onDelete: () => void }) {
   const specialties = doctor.specialties?.slice(0, 2).map((specialty) => specialty.name).join(" | ") || "No specialty";
-  return <article className="border-b border-slate-100 p-4 last:border-b-0"><div className="flex items-center gap-3"><span className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand"><i className="fa-solid fa-user-doctor text-lg" aria-hidden="true" /></span><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-3"><h2 className="truncate text-sm font-extrabold text-foreground">{doctor.name}</h2>{doctor.consultation_fee && <p className="shrink-0 text-sm font-extrabold text-brand">{formatCurrency(doctor.consultation_fee)}</p>}</div><p className="mt-1 truncate text-xs font-semibold text-foreground-muted">{specialties}</p><p className="mt-1 truncate text-xs text-foreground-muted">{[doctor.qualification, doctor.schedule?.next_available].filter(Boolean).join(" | ")}</p></div></div><div className="mt-3 grid grid-cols-2 gap-2"><Link href={`/${encodeURIComponent(slug)}/manage/doctors/${encodeURIComponent(doctor.slug)}/edit`} className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-brand-50 text-[11px] font-extrabold text-brand"><i className="fa-solid fa-pen" />Edit</Link><button type="button" onClick={onDelete} className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-red-50 text-[11px] font-extrabold text-danger"><i className="fa-solid fa-trash" />Delete</button></div></article>;
+  return <article className="border-b border-slate-100 p-4 last:border-b-0"><div className="flex items-center gap-3"><DoctorAvatar doctor={doctor} className="size-14 rounded-lg" iconClassName="text-lg" /><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-3"><h2 className="truncate text-sm font-extrabold text-foreground">{doctor.name}</h2>{doctor.consultation_fee && <p className="shrink-0 text-sm font-extrabold text-brand">{formatCurrency(doctor.consultation_fee)}</p>}</div><p className="mt-1 truncate text-xs font-semibold text-foreground-muted">{specialties}</p><p className="mt-1 truncate text-xs text-foreground-muted">{[doctor.qualification, doctor.schedule?.next_available].filter(Boolean).join(" | ")}</p></div></div><div className="mt-3 grid grid-cols-2 gap-2"><Link href={`/${encodeURIComponent(slug)}/manage/doctors/${encodeURIComponent(doctor.slug)}/edit`} className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-brand-50 text-[11px] font-extrabold text-brand"><i className="fa-solid fa-pen" />Edit</Link><button type="button" onClick={onDelete} className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-red-50 text-[11px] font-extrabold text-danger"><i className="fa-solid fa-trash" />Delete</button></div></article>;
+}
+
+function DoctorAvatar({ doctor, className, iconClassName }: { doctor: DoctorListItem; className: string; iconClassName: string }) {
+  return <span className={`relative flex shrink-0 items-center justify-center overflow-hidden bg-brand-50 text-brand ${className}`}>
+    {doctor.profile_image ? <Image src={doctor.profile_image} alt="" fill sizes="56px" className="object-cover" /> : <i className={`fa-solid fa-user-doctor ${iconClassName}`} aria-hidden="true" />}
+  </span>;
 }
 
 function DeleteSheet({ doctor, pending, error, onClose, onConfirm }: { doctor: DoctorListItem | null; pending: boolean; error: boolean; onClose: () => void; onConfirm: () => void }) {
