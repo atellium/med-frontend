@@ -120,5 +120,5 @@ export type DoctorUpsertPayload = Partial<{
   treatments: string[];
   is_active: boolean;
   schedules: DoctorSchedulePayload[];
-  profile_image: File;
+  profile_image: File | null;
 }>;

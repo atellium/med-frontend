@@ -43,6 +43,7 @@ export function DoctorEditorScreen({ providerSlug, catalogSlug }: { providerSlug
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const [profileImageError, setProfileImageError] = useState<string | null>(null);
+  const [profileImageRemoved, setProfileImageRemoved] = useState(false);
   const [treatments, setTreatments] = useState("");
   const [languages, setLanguages] = useState("");
   const [schedules, setSchedules] = useState<ScheduleDraft[]>([]);
@@ -124,6 +125,7 @@ export function DoctorEditorScreen({ providerSlug, catalogSlug }: { providerSlug
     const treatmentList = splitList(treatments);
     if (treatmentList.length > 0) payload.treatments = treatmentList;
     if (schedulePayload.length > 0) payload.schedules = schedulePayload;
+    if (editing && profileImageRemoved && !profileImage) payload.profile_image = null;
     save.mutate(payload, { onError: () => setError(`Unable to ${editing ? "update" : "add"} doctor.`) });
   }
 
@@ -136,6 +138,7 @@ export function DoctorEditorScreen({ providerSlug, catalogSlug }: { providerSlug
       if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
       setProfileImage(compressed);
       setProfileImagePreview(URL.createObjectURL(compressed));
+      setProfileImageRemoved(false);
       setProfileImageError(null);
     } catch (compressionError) {
       setProfileImageError(compressionError instanceof Error ? compressionError.message : "Unable to prepare the selected image.");
@@ -146,6 +149,7 @@ export function DoctorEditorScreen({ providerSlug, catalogSlug }: { providerSlug
     if (profileImagePreview) URL.revokeObjectURL(profileImagePreview);
     setProfileImage(null);
     setProfileImagePreview(null);
+    setProfileImageRemoved(true);
     setProfileImageError(null);
   }
 
@@ -153,7 +157,7 @@ export function DoctorEditorScreen({ providerSlug, catalogSlug }: { providerSlug
   if (editing && detail.isError) return <div className="min-h-dvh bg-slate-50"><MobileHeader title="Edit Doctor" subtitle={provider.data?.name} /><p className="py-12 text-center text-sm font-semibold text-danger">Doctor not found.</p></div>;
 
   return <div className="min-h-dvh bg-slate-50 pb-10"><MobileHeader title={editing ? "Edit Doctor" : "Add Doctor"} subtitle={provider.data?.name ?? "Loading provider..."} /><form onSubmit={submit} className="mx-auto w-full max-w-3xl space-y-4 px-page pt-5">
-    <FormCard title="Doctor details"><Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter doctor name" className={inputClass} /></Field><Field label="Qualification"><input value={qualification} onChange={(e) => setQualification(e.target.value)} placeholder="MBBS, MD (Medicine)" className={inputClass} /></Field><ProfileImagePicker source={profileImagePreview ?? detail.data?.profile_image ?? null} hasNewImage={Boolean(profileImage)} error={profileImageError} disabled={isBusy} onSelect={selectProfileImage} onClear={clearProfileImage} /><Field label="Bio"><textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Short profile summary" rows={4} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-brand" /></Field></FormCard>
+    <FormCard title="Doctor details"><Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter doctor name" className={inputClass} /></Field><Field label="Qualification"><input value={qualification} onChange={(e) => setQualification(e.target.value)} placeholder="MBBS, MD (Medicine)" className={inputClass} /></Field><ProfileImagePicker source={profileImageRemoved ? null : profileImagePreview ?? detail.data?.profile_image ?? null} canRemove={Boolean(profileImage || (!profileImageRemoved && detail.data?.profile_image))} hasNewImage={Boolean(profileImage)} error={profileImageError} disabled={isBusy} onSelect={selectProfileImage} onClear={clearProfileImage} /><Field label="Bio"><textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Short profile summary" rows={4} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-brand" /></Field></FormCard>
     <SpecialtyPicker selected={specialties} onChange={setSpecialties} />
     <FormCard title="Professional details"><Field label="Registration number"><input value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)} placeholder="WBMC-12345" className={inputClass} /></Field><Field label="Registration council"><input value={registrationCouncil} onChange={(e) => setRegistrationCouncil(e.target.value)} placeholder="West Bengal Medical Council" className={inputClass} /></Field><Field label="Registration year"><input inputMode="numeric" maxLength={4} value={registrationYear} onChange={(e) => setRegistrationYear(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="2018" className={inputClass} /></Field></FormCard>
     <FormCard title="Consultation"><Field label="Consultation fee"><input type="number" min="0" step="0.01" value={consultationFee} onChange={(e) => setConsultationFee(e.target.value)} placeholder="900" className={inputClass} /></Field></FormCard>
@@ -186,6 +190,7 @@ function ScheduleEditor({ schedules, onChange }: { schedules: ScheduleDraft[]; o
 
 function ProfileImagePicker({
   source,
+  canRemove,
   hasNewImage,
   error,
   disabled,
@@ -193,6 +198,7 @@ function ProfileImagePicker({
   onClear,
 }: {
   source: string | null;
+  canRemove: boolean;
   hasNewImage: boolean;
   error: string | null;
   disabled: boolean;
@@ -220,7 +226,7 @@ function ProfileImagePicker({
             Select image
             <input type="file" accept="image/*" disabled={disabled} onChange={onSelect} className="sr-only" />
           </label>
-          {hasNewImage && <button type="button" onClick={onClear} disabled={disabled} className="h-9 rounded-lg border border-slate-200 px-3 text-xs font-extrabold text-foreground disabled:opacity-60">Clear</button>}
+          {canRemove && <button type="button" onClick={onClear} disabled={disabled} className="h-9 rounded-lg border border-slate-200 px-3 text-xs font-extrabold text-foreground disabled:opacity-60">Remove</button>}
         </div>
       </div>
     </div>
